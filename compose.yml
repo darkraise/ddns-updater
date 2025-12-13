@@ -1,0 +1,46 @@
+services:
+  cloudflare-ddns:
+    build: .
+    container_name: cloudflare-ddns
+    restart: unless-stopped
+    environment:
+      # Cloudflare Configuration (required)
+      - CF_API_TOKEN=${CF_API_TOKEN}
+      - CF_ZONE_ID=${CF_ZONE_ID}
+      - CF_RECORD_NAME=${CF_RECORD_NAME}
+
+      # Check interval (optional, default: 300)
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
+
+      # DNS Record Configuration (optional)
+      - DNS_RECORD_TYPE=${DNS_RECORD_TYPE:-A}
+      - DNS_TTL=${DNS_TTL:-120}
+      - DNS_PROXIED=${DNS_PROXIED:-false}
+
+      # Notification Services (all optional)
+      - NTFY_TOPIC=${NTFY_TOPIC:-}
+      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - SLACK_WEBHOOK=${SLACK_WEBHOOK:-}
+      - MAILJET_API_KEY=${MAILJET_API_KEY:-}
+      - MAILJET_API_SECRET=${MAILJET_API_SECRET:-}
+      - MAILJET_FROM_EMAIL=${MAILJET_FROM_EMAIL:-}
+      - MAILJET_FROM_NAME=${MAILJET_FROM_NAME:-}
+      - MAILJET_TO_EMAIL=${MAILJET_TO_EMAIL:-}
+
+    # Read-only root filesystem for security
+    read_only: true
+    tmpfs:
+      - /tmp:size=1M
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Logging configuration to prevent log buildup
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
