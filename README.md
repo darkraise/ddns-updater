@@ -16,9 +16,8 @@ A lightweight, minimal Docker service that automatically updates Cloudflare DNS 
 
 ### Using Pre-built Docker Image
 
-The easiest way to get started is using a pre-built image. Images are available from both GitHub Container Registry (public) and Vultr Container Registry:
+The easiest way to get started is using a pre-built image. Images are available from GitHub Container Registry (public)
 
-**Option 1: GitHub Container Registry (Recommended - Public)**
 ```bash
 # Copy the example environment file
 cp .env.example .env
@@ -28,28 +27,20 @@ nano .env
 
 # Pull and run the latest image
 docker run -d \
-  --name cloudflare-ddns \
+  --name ddns-updater \
   --restart unless-stopped \
   --env-file .env \
-  ghcr.io/YOUR_USERNAME/ddns-updater:latest
-```
-
-**Option 2: Vultr Container Registry**
-```bash
-docker run -d \
-  --name cloudflare-ddns \
-  --restart unless-stopped \
-  --env-file .env \
-  sgp.vultrcr.com/YOUR_NAMESPACE/ddns-updater:latest
+  ghcr.io/darkraise/ddns-updater:latest
 ```
 
 **Using Docker Compose:**
 
 Update `compose.yml` to use the pre-built image:
+
 ```yaml
 services:
-  cloudflare-ddns:
-    image: ghcr.io/YOUR_USERNAME/ddns-updater:latest
+  ddns-updater:
+    image: ghcr.io/darkraise/ddns-updater:latest
     # ... rest of your config
 ```
 
@@ -84,6 +75,7 @@ nano .env
 ```
 
 Required variables in `.env`:
+
 ```env
 CF_API_TOKEN=your_api_token_here
 CF_ZONE_ID=your_zone_id_here
@@ -108,44 +100,46 @@ docker-compose down
 
 ### Required Variables
 
-| Variable | Description |
-|----------|-------------|
-| `CF_API_TOKEN` | Cloudflare API token with DNS edit permissions |
-| `CF_ZONE_ID` | Cloudflare zone ID for your domain |
-| `CF_RECORD_NAME` | Full DNS record name (e.g., ddns.example.com) |
+| Variable         | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `CF_API_TOKEN`   | Cloudflare API token with DNS edit permissions |
+| `CF_ZONE_ID`     | Cloudflare zone ID for your domain             |
+| `CF_RECORD_NAME` | Full DNS record name (e.g., ddns.example.com)  |
 
 ### Optional - Basic Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CHECK_INTERVAL` | 300 | Interval in seconds between IP checks |
-| `DNS_RECORD_TYPE` | A | DNS record type (A for IPv4, AAAA for IPv6) |
-| `DNS_TTL` | 120 | Time to live in seconds (60-86400, or 1 for auto) |
-| `DNS_PROXIED` | false | Cloudflare proxy status (true = orange cloud, false = gray cloud) |
+| Variable          | Default | Description                                                       |
+| ----------------- | ------- | ----------------------------------------------------------------- |
+| `CHECK_INTERVAL`  | 300     | Interval in seconds between IP checks                             |
+| `DNS_RECORD_TYPE` | A       | DNS record type (A for IPv4, AAAA for IPv6)                       |
+| `DNS_TTL`         | 120     | Time to live in seconds (60-86400, or 1 for auto)                 |
+| `DNS_PROXIED`     | false   | Cloudflare proxy status (true = orange cloud, false = gray cloud) |
 
 ### Optional - Notification Services
 
 Configure one or more notification services to receive alerts when your IP address changes:
 
-| Service | Variables | Description |
-|---------|-----------|-------------|
-| **ntfy.sh** | `NTFY_TOPIC` | Free push notifications, no signup required |
-| **Discord** | `DISCORD_WEBHOOK` | Send notifications to Discord channel |
-| **Telegram** | `TELEGRAM_BOT_TOKEN`<br>`TELEGRAM_CHAT_ID` | Bot notifications via Telegram |
-| **Slack** | `SLACK_WEBHOOK` | Send notifications to Slack channel |
-| **Mailjet** | `MAILJET_API_KEY`<br>`MAILJET_API_SECRET`<br>`MAILJET_FROM_EMAIL`<br>`MAILJET_TO_EMAIL`<br>`MAILJET_FROM_NAME` (optional) | Email notifications via Mailjet API |
+| Service      | Variables                                                                                                                 | Description                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **ntfy.sh**  | `NTFY_TOPIC`                                                                                                              | Free push notifications, no signup required |
+| **Discord**  | `DISCORD_WEBHOOK`                                                                                                         | Send notifications to Discord channel       |
+| **Telegram** | `TELEGRAM_BOT_TOKEN`<br>`TELEGRAM_CHAT_ID`                                                                                | Bot notifications via Telegram              |
+| **Slack**    | `SLACK_WEBHOOK`                                                                                                           | Send notifications to Slack channel         |
+| **Mailjet**  | `MAILJET_API_KEY`<br>`MAILJET_API_SECRET`<br>`MAILJET_FROM_EMAIL`<br>`MAILJET_TO_EMAIL`<br>`MAILJET_FROM_NAME` (optional) | Email notifications via Mailjet API         |
 
 See `.env.example` for detailed setup instructions for each notification service.
 
 ### Configuration Examples
 
 **Check Interval:**
+
 - `60` - Check every 1 minute (frequent updates)
 - `300` - Check every 5 minutes (recommended)
 - `600` - Check every 10 minutes
 - `3600` - Check every 1 hour (infrequent changes)
 
 **DNS Proxied:**
+
 - `false` - DNS only (gray cloud) - Recommended for DDNS
 - `true` - Proxied through Cloudflare (orange cloud) - Hides real IP
 
@@ -155,17 +149,17 @@ If you prefer not to use Docker Compose:
 
 ```bash
 # Build the image
-docker build -t cloudflare-ddns .
+docker build -t ddns-updater .
 
 # Run the container
 docker run -d \
-  --name cloudflare-ddns \
+  --name ddns-updater \
   --restart unless-stopped \
   -e CF_API_TOKEN=your_token \
   -e CF_ZONE_ID=your_zone_id \
   -e CF_RECORD_NAME=ddns.example.com \
   -e CHECK_INTERVAL=300 \
-  cloudflare-ddns
+  ddns-updater
 ```
 
 ## How It Works
@@ -181,7 +175,7 @@ The service logs all operations:
 
 ```bash
 # View logs
-docker-compose logs -f cloudflare-ddns
+docker-compose logs -f ddns-updater
 
 # Example output
 [2025-12-13 10:00:00] Starting Cloudflare DDNS Updater
@@ -196,30 +190,36 @@ docker-compose logs -f cloudflare-ddns
 ## Troubleshooting
 
 ### Check if container is running
+
 ```bash
-docker ps | grep cloudflare-ddns
+docker ps | grep ddns-updater
 ```
 
 ### View recent logs
+
 ```bash
-docker-compose logs --tail=50 cloudflare-ddns
+docker-compose logs --tail=50 ddns-updater
 ```
 
 ### Test IP detection manually
+
 ```bash
-docker-compose exec cloudflare-ddns wget -qO- https://api.ipify.org
+docker-compose exec ddns-updater wget -qO- https://api.ipify.org
 ```
 
 ### Common Issues
 
 **"CF_API_TOKEN environment variable is required"**
+
 - Ensure `.env` file exists and contains `CF_API_TOKEN`
 
 **"Failed to get public IP"**
+
 - Check internet connectivity
 - Firewall might be blocking outbound HTTPS
 
 **"Failed to update DNS record"**
+
 - Verify API token has correct permissions
 - Check Zone ID is correct
 - Ensure DNS record name matches exactly
@@ -227,6 +227,7 @@ docker-compose exec cloudflare-ddns wget -qO- https://api.ipify.org
 ## Resource Usage
 
 Typical resource consumption:
+
 - **Image size**: ~14 MB
 - **Memory usage**: 10-20 MB
 - **CPU usage**: <1% (mostly idle)
@@ -248,14 +249,10 @@ Pre-built Docker images are automatically built and published via GitHub Actions
 
 Images are published to two registries:
 
-1. **GitHub Container Registry (Public)**: `ghcr.io/YOUR_USERNAME/ddns-updater`
+1. **GitHub Container Registry (Public)**: `ghcr.io/darkraise/ddns-updater`
    - Publicly accessible
    - No authentication required for pulling
    - Recommended for most users
-
-2. **Vultr Container Registry**: `sgp.vultrcr.com/YOUR_NAMESPACE/ddns-updater`
-   - Private registry
-   - Requires authentication
 
 ### Available Tags
 
@@ -275,15 +272,17 @@ Images are published to two registries:
 ### CI/CD Workflow
 
 The project uses GitHub Actions to automatically:
+
 1. Build the Docker image on every push to master
 2. Increment the version number automatically
-3. Push to both GitHub Container Registry (ghcr.io) and Vultr Container Registry
+3. Push to GitHub Container Registry (ghcr.io)
 4. Tag images with both version-specific tags and `latest`
 5. Create git tags for version tracking
 
 ### Version Bumping
 
 Versions are automatically incremented by default (patch version):
+
 - **Patch** (default): `v0.0.1` → `v0.0.2`
 - **Minor**: Include `(MINOR)` in commit message → `v0.0.1` → `v0.1.0`
 - **Major**: Include `(MAJOR)` in commit message → `v0.0.1` → `v1.0.0`

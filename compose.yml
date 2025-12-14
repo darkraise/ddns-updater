@@ -1,7 +1,7 @@
 services:
-  cloudflare-ddns:
-    build: .
-    container_name: cloudflare-ddns
+  ddns-updater:
+    image: ghcr.io/darkraise/ddns-updater:latest
+    container_name: ddns-updater
     restart: unless-stopped
     environment:
       # Cloudflare Configuration (required)
