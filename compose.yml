@@ -1,6 +1,6 @@
 services:
   ddns-updater:
-    image: ghcr.io/darkraise/ddns-updater:latest
+    image: darkraise/ddns-updater:latest
     container_name: ddns-updater
     restart: unless-stopped
     environment:

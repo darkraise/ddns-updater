@@ -16,7 +16,7 @@ A lightweight, minimal Docker service that automatically updates Cloudflare DNS 
 
 ### Using Pre-built Docker Image
 
-The easiest way to get started is using a pre-built image. Images are available from GitHub Container Registry (public)
+The easiest way to get started is using a pre-built image. Images are available from Docker Hub (public)
 
 ```bash
 # Copy the example environment file
@@ -30,7 +30,7 @@ docker run -d \
   --name ddns-updater \
   --restart unless-stopped \
   --env-file .env \
-  ghcr.io/darkraise/ddns-updater:latest
+  darkraise/ddns-updater:latest
 ```
 
 **Using Docker Compose:**
@@ -40,7 +40,7 @@ Update `compose.yml` to use the pre-built image:
 ```yaml
 services:
   ddns-updater:
-    image: ghcr.io/darkraise/ddns-updater:latest
+    image: darkraise/ddns-updater:latest
     # ... rest of your config
 ```
 
@@ -249,7 +249,7 @@ Pre-built Docker images are automatically built and published via GitHub Actions
 
 Images are published to two registries:
 
-1. **GitHub Container Registry (Public)**: `ghcr.io/darkraise/ddns-updater`
+1. **Docker Hub (Public)**: `darkraise/ddns-updater`
    - Publicly accessible
    - No authentication required for pulling
    - Recommended for most users
