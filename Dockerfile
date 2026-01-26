@@ -1,9 +1,9 @@
 # Use Alpine Linux as base - minimal image
 FROM alpine:3.20
 
-# Install only ca-certificates (wget is built into busybox)
+# Install ca-certificates and curl (wget is built into busybox but lacks --method support)
 # Combine all operations in single layer to minimize size
-RUN apk add --no-cache ca-certificates && \
+RUN apk add --no-cache ca-certificates curl && \
     adduser -D -u 1000 ddns
 
 # Copy script with correct permissions in one step

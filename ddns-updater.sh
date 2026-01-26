@@ -113,14 +113,14 @@ update_cloudflare_dns() {
 
     log "Updating Cloudflare DNS record $CF_RECORD_NAME to $new_ip"
 
-    response=$(wget -qO- --method=PUT \
-        --header="Authorization: Bearer $CF_API_TOKEN" \
-        --header="Content-Type: application/json" \
-        --body-data="{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$CF_RECORD_NAME\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
+    response=$(curl -s -X PUT \
+        -H "Authorization: Bearer $CF_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$CF_RECORD_NAME\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
         "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$record_id" 2>&1)
 
     if [ -z "$response" ]; then
-        log "ERROR: No response from Cloudflare API (network issue or wget failed)"
+        log "ERROR: No response from Cloudflare API (network issue or curl failed)"
         return 1
     fi
 
