@@ -78,10 +78,12 @@ validate_cloudflare_access() {
 }
 
 get_cloudflare_record() {
+    record_name="$1"
+
     response=$(wget -qO- \
         --header="Authorization: Bearer $CF_API_TOKEN" \
         --header="Content-Type: application/json" \
-        "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$CF_RECORD_NAME&type=$DNS_RECORD_TYPE" 2>&1)
+        "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records?name=$record_name&type=$DNS_RECORD_TYPE" 2>&1)
 
     if [ -z "$response" ]; then
         log "ERROR: No response from Cloudflare API (network issue or wget failed)"
@@ -108,15 +110,16 @@ get_cloudflare_record() {
 }
 
 update_cloudflare_dns() {
-    new_ip="$1"
-    record_id="$2"
+    record_name="$1"
+    new_ip="$2"
+    record_id="$3"
 
-    log "Updating Cloudflare DNS record $CF_RECORD_NAME to $new_ip"
+    log "Updating Cloudflare DNS record $record_name to $new_ip"
 
     response=$(curl -s -X PUT \
         -H "Authorization: Bearer $CF_API_TOKEN" \
         -H "Content-Type: application/json" \
-        -d "{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$CF_RECORD_NAME\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
+        -d "{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$record_name\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
         "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records/$record_id" 2>&1)
 
     if [ -z "$response" ]; then
@@ -134,11 +137,12 @@ update_cloudflare_dns() {
 }
 
 create_cloudflare_dns() {
-    new_ip="$1"
+    record_name="$1"
+    new_ip="$2"
 
-    log "Creating Cloudflare DNS record $CF_RECORD_NAME with IP $new_ip"
+    log "Creating Cloudflare DNS record $record_name with IP $new_ip"
 
-    response=$(wget -qO- --post-data="{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$CF_RECORD_NAME\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
+    response=$(wget -qO- --post-data="{\"type\":\"$DNS_RECORD_TYPE\",\"name\":\"$record_name\",\"content\":\"$new_ip\",\"ttl\":$DNS_TTL,\"proxied\":$DNS_PROXIED}" \
         --header="Authorization: Bearer $CF_API_TOKEN" \
         --header="Content-Type: application/json" \
         "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records" 2>&1)
@@ -241,41 +245,49 @@ check_and_update() {
 
     log "Current public IP: $current_ip"
 
-    # Get Cloudflare DNS record info
-    record_info=$(get_cloudflare_record)
+    # Iterate over all configured record names (comma-separated)
+    echo "$CF_RECORD_NAME" | tr ',' '\n' | while read -r record_name; do
+        # Trim whitespace
+        record_name=$(echo "$record_name" | tr -d '[:space:]')
+        [ -z "$record_name" ] && continue
 
-    if [ -n "$record_info" ]; then
-        # Parse record ID and IP
-        record_id=$(echo "$record_info" | cut -d'|' -f1)
-        dns_ip=$(echo "$record_info" | cut -d'|' -f2)
+        log "--- Checking record: $record_name ---"
 
-        log "DNS record IP: $dns_ip"
+        # Get Cloudflare DNS record info
+        record_info=$(get_cloudflare_record "$record_name")
 
-        # Check if IP changed
-        if [ "$current_ip" = "$dns_ip" ]; then
-            log "IP unchanged, no update needed"
-            notify_discord "IP check: $CF_RECORD_NAME still points to $current_ip (no change)"
-            return 0
+        if [ -n "$record_info" ]; then
+            # Parse record ID and IP
+            record_id=$(echo "$record_info" | cut -d'|' -f1)
+            dns_ip=$(echo "$record_info" | cut -d'|' -f2)
+
+            log "DNS record IP: $dns_ip"
+
+            # Check if IP changed
+            if [ "$current_ip" = "$dns_ip" ]; then
+                log "IP unchanged for $record_name, no update needed"
+                continue
+            fi
+
+            log "IP changed from '$dns_ip' to '$current_ip'"
+
+            # Update existing record
+            if update_cloudflare_dns "$record_name" "$current_ip" "$record_id"; then
+                send_notifications "DNS record $record_name updated: $dns_ip -> $current_ip"
+            fi
+        else
+            # Record doesn't exist, create it
+            log "DNS record $record_name not found, creating new record"
+            if create_cloudflare_dns "$record_name" "$current_ip"; then
+                send_notifications "DNS record $record_name created with IP: $current_ip"
+            fi
         fi
-
-        log "IP changed from '$dns_ip' to '$current_ip'"
-
-        # Update existing record
-        if update_cloudflare_dns "$current_ip" "$record_id"; then
-            send_notifications "DNS record $CF_RECORD_NAME updated: $dns_ip -> $current_ip"
-        fi
-    else
-        # Record doesn't exist, create it
-        log "DNS record not found, creating new record"
-        if create_cloudflare_dns "$current_ip"; then
-            send_notifications "DNS record $CF_RECORD_NAME created with IP: $current_ip"
-        fi
-    fi
+    done
 }
 
 # Main loop
 log "Starting Cloudflare DDNS Updater"
-log "Domain: $CF_RECORD_NAME"
+log "Domains: $CF_RECORD_NAME"
 log "Check interval: ${CHECK_INTERVAL}s"
 
 # Validate Cloudflare API access before starting

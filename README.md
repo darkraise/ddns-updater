@@ -104,7 +104,7 @@ docker-compose down
 | ---------------- | ---------------------------------------------- |
 | `CF_API_TOKEN`   | Cloudflare API token with DNS edit permissions |
 | `CF_ZONE_ID`     | Cloudflare zone ID for your domain             |
-| `CF_RECORD_NAME` | Full DNS record name (e.g., ddns.example.com)  |
+| `CF_RECORD_NAME` | DNS record name(s), comma-separated (e.g., `ddns.example.com` or `a.example.com,b.example.com`) |
 
 ### Optional - Basic Configuration
 

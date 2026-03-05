@@ -68,7 +68,7 @@ export CF_RECORD_NAME="ddns.example.com"
 **Required environment variables** (in `.env`):
 - `CF_API_TOKEN` - Cloudflare API token with Zone.DNS (Edit) permission
 - `CF_ZONE_ID` - Cloudflare zone identifier
-- `CF_RECORD_NAME` - Full DNS record name (e.g., `ddns.example.com`)
+- `CF_RECORD_NAME` - DNS record name(s), comma-separated (e.g., `ddns.example.com` or `a.example.com,b.example.com`)
 
 **Optional configuration**:
 - `CHECK_INTERVAL` (default: 300) - Seconds between IP checks
